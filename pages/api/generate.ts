@@ -74,19 +74,19 @@ export default async function handler(
 
 //const textResponse = response.data.choices[0].text;
 const textResponse = response.data.choices[0].message?.content;
-console.log(textResponse)
+// console.log(textResponse)
 
 const [originalStory, promptString] = textResponse.split('Prompts:');
 
-const story = "Click Next to start the story. " + originalStory;
-const sentences = story.split(/[\.\?!]['"]?\s+/);
+const quote = "Turn the knob to start the story. " + originalStory;
+const sentences = quote.split(/[\.\?!]['"]?\s+/);
 const imagePrompt = promptString.split('\n').slice(1).map(prompt => prompt.trim());
 imagePrompt.unshift("Prompt:");
 
 console.log(sentences)
 console.log(imagePrompt)
 
-const responseData = {textResponse, imagePrompt, sentences, story};
+const responseData = {imagePrompt, sentences, quote};
 if(textResponse){
   res.status(200).json({responseData});
 }

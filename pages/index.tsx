@@ -9,6 +9,7 @@ import * as tmImage from '@teachablemachine/image'
 import Webcam from 'react-webcam'
 import axios from "axios"
 import { SerialPort } from 'serialport'
+import {useSpeechSynthesis} from 'react-speech-kit'
 
 
 export default function Home() {
@@ -18,7 +19,7 @@ export default function Home() {
   const [image, updateImage] = useState("");
   const [text, updateText] = useState("");
   const [sentenceIndex, setSentenceIndex] = useState(0);
-  const [sentences, setSentences] = useState(["Create your story!"]);
+  const [story, setStory] = useState(["Act your hand shadow to start the story generation!"]);
 
   // Initialize the prompt for story and image
   const [quote, setQuote] = useState("");
@@ -27,34 +28,37 @@ export default function Home() {
   const [quoteLoadingError, setQuoteLoadingError] = useState(false);
   let arduinoData: any;
 
-  // async function openPort() {
-    // const sp = new SerialPort({path: 'COM6', baudRate: 9600});
-    // sp.open(function(err) {
-    //   if (err) {
-    //     return console.log(err.message);
-    //   }
-    // });
-    // let k = 0;
-    // sp.on('open', function() {
-    //   k = 1;
-    //   console.log("Serial Port Opened");
-    // });
-  
-    // sp.on('data', function(data) {
-    //   console.log(data[0])
-    //   arduinoData = data[0];
-    // });
-  // }
+  var num = 0;
+
+
+    // async function openPort() {
+      // const sp = new SerialPort({path: 'COM6', baudRate: 9600});
+      // sp.open(function(err) {
+      //   if (err) {
+      //     return console.log(err.message);
+      //   }
+      // });
+      // let k = 0;
+      // sp.on('open', function() {
+      //   k = 1;
+      //   console.log("Serial Port Opened");
+      // });
+    
+      // sp.on('data', function(data) {
+      //   console.log(data[0])
+      //   arduinoData = data[0];
+      // });
+    // }
 
   
 
-
+//#################### TEACHABLE MACHINE ####################
   //const TeachableMachine = require("@sashido/teachablemachine-node");
   const URL = "https://teachablemachine.withgoogle.com/models/7M2dW0YzA/";
 
   let model: any, webcam: any, labelContainer: any, maxPredictions: any, webcamContainer: any, target: any;
 
-  // Integrate the teacheable machine model and webcam inputs.
+  // TM:  Integrate the teacheable machine model and webcam inputs.
   async function init() {
     const modelURL = URL + "model.json";
     const metadataURL = URL + "metadata.json";
@@ -82,13 +86,15 @@ export default function Home() {
 
   }
 
+
+  // TM: webcam loop
   async function loop() {
     webcam.update(); // update the webcam frame
     await predict();
     window.requestAnimationFrame(loop);
   }
 
-  // run the webcam image through the image model
+  // TM: run the webcam image through the image model
   async function predict() {
       // predict can take in an image, video or canvas html element
       const prediction = await model.predict(webcam.canvas);
@@ -102,7 +108,8 @@ export default function Home() {
       }
   }
 
-  // Submit button script
+  // ###################################### OPENAI ######################################
+  // Capture button: initiate the story generation from OPENAI
   async function handleSubmit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
     const formData = new FormData(e.target as HTMLFormElement);
@@ -129,10 +136,12 @@ export default function Home() {
     }
   }
 
-  // Image generation that connects to SD backend hook
-  async function updateSentences(){
+  // ################### OPENAI: send keyword and Get story and image prompt ###################
+  
+  async function generateStory(){
     const prompt = target;
 
+    // detect story generation, if the story is not generated, loading...
     if (prompt) {
       try {
         setQuote("");
@@ -141,7 +150,7 @@ export default function Home() {
 
         const response = await fetch("/api/generate?prompt=" + encodeURIComponent(prompt));
         const body = await response.json();
-        setQuote(body.responseData.story);
+        setQuote(body.responseData.quote);
         setImagePrompt(body.responseData.imagePrompt);
 
       } catch (error) {
@@ -151,62 +160,129 @@ export default function Home() {
         setQuoteLoading(false);
       }
     }
+
+    //After getting the story, split the story into sentences
     if (quote == undefined){
-      setSentences(["Story time! Click Next to start the story."])
+      setStory(["No story yet"])
     }
     else{
-      setSentences(quote.split(/[\.\?!]['"]?\s+/));
+      setStory(quote.split(/[\.\?!]['"]?\s+/));
     }
+
+ 
   }
 
+  //  next chapter
   const handleNextClick = () => {
     if (sentenceIndex < 5) {
       setSentenceIndex(sentenceIndex + 1);
     }
+    console.log("sentenceIndex:"+sentenceIndex);
   };
 
-    // send to sd to get image
+
+
+ 
+
+  // ######################### SD: Get image #########################
   const generateImage = async (text: any) =>{
     const imageResult = await axios.get(`http://127.0.0.1:8000/?text=${imagePrompt[sentenceIndex+1]} by Hayao Miyazaki`)
     updateImage(imageResult.data)
   }
 
+  // ######################### Voice Over #########################
+  const {speak} = useSpeechSynthesis();
+  const handleSpeak = () => {
+    speak({text: story[sentenceIndex+1], rate: 0.8});
+  }
+
+
+
+  // ################### KEYBOARD ###################
+ 
+
+
+  useEffect(() => {
+   
+    document.addEventListener ("keydown", handleKeyPress);
+
+  }, []);
+
+ 
+  const handleKeyPress = (event: any) => {
+    console.log(event.key);
+    // console.log("num: " + num);
+
+    // start camera
+    if (event.key == "Enter"){
+      // init ();
+      event.preventDefault();
+      document.getElementById("start").click();
+      console.log("start camera");
+    }
+
+    // //capture
+    if (event.key == " "){
+      event.preventDefault();
+      document.getElementById("capture").click();
+      console.log("capture image");
+    }
+
+    if (event.key == "1"){
+      event.preventDefault();
+      document.getElementById("next").click();
+    }
+
+
+    //next sentence
+
+    if (event.key == "ArrowRight"){
+      //progress +1 until 10
+      if (num < 10) { num += 1; }
+
+      if (num == 10) {
+        console.log("num: 10 - next chapter")
+        num = 0;
+
+        event.preventDefault();
+        document.getElementById("next").click();
+      }
+      
+    }
+  };
+
+  // ################### MAIN APP ###################
+
+
 
   return (
     <main className={styles.main}>
-      <h1>Fairy Tale GPT</h1>
-      <div>Generate a fairy tale based on hand gesture.</div>
-      {/* <Form onSubmit={handleSubmit} className={styles.inputForm}>
-        <Form.Group className='mb-3' controlId='prompt-input'>
-          <Form.Label>Type an animal to start...</Form.Label>
-          <Form.Control
-            name='prompt'
-            placeholder='e.g. cat, dog, bunny'
-            maxLength={100}
-          />
-        </Form.Group>
-        <Button type='submit' className='mb-3' disabled={quoteLoading}>Tell me a story!</Button>
-    
-  
-      </Form> */}
-      <Button type='button' onClick={updateSentences} disabled={quoteLoading}>Capture</Button>
-      <Button onClick = {e => {
+      {/* <h1>Fairy Tale GPT</h1>
+      <div>Generate a fairy tale based on hand gesture.</div> */}
+
+      <Button type="button" id="start" style={{ display: "none" }} onClick={init}>Start Camera</Button>
+
+      <Button type='button' id="capture"style={{ display: "none" }} onClick={generateStory} disabled={quoteLoading}>Capture</Button>
+      <Button type="button" id="next" style={{ display: "none" }} onClick = {e => {
+                  console.log("button next")
                   handleNextClick();
                   generateImage(text);
-                  updateSentences();
+                  generateStory();
+                  handleSpeak();
                 }} >Next</Button>
+      {/* <Button onClick = {() => {handleSpeak();}}>Speak</Button> */}
 
       { quoteLoading && <Spinner animation='border' />}
       { quoteLoadingError && "Something went wrong"}
-      {/* { quote && <h5>{quote}</h5>} */}
-      { sentences[sentenceIndex] && <h5>{sentences[sentenceIndex]}</h5>}
       {/* { sentenceIndex && <h5>{quote}</h5>} */}
-      <div>{arduinoData}</div>
-      <div>1</div>
-      <Button type="button" onClick={init}>Start</Button>
-      {image ?<Image src={`data:image.png;base64,${image}`} alt="image" width="600" height="600"/> : null} 
-      <div id="webcam-container"></div>
-      <div id="label-container"></div>
+      {/* { sentenceIndex && <h5>{sentenceIndex}</h5>} */}
+
+      
+      {image ?<Image src={`data:image.png;base64,${image}`} alt="image" width="1080" height="1080"/> : null} 
+      { story[sentenceIndex] && <h5>{story[sentenceIndex]}</h5>}
+
+      <div id="webcam-container" style={{ display: "none" }}></div>
+      <div id="label-container" style={{ display: "none" }}></div>
 
     </main>
   )

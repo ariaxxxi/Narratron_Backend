@@ -33,6 +33,7 @@
     "react-bootstrap": "^2.7.4",
     "react-dom": "18.2.0",
     "react-firebase-hooks": "^5.1.1",
+    "react-speech-kit": "^3.0.1",
     "react-webcam": "^7.0.1",
     "replicate": "^0.11.1",
     "serialport": "^10.5.0",
