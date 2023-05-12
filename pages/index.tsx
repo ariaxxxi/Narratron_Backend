@@ -10,17 +10,20 @@ import Webcam from 'react-webcam'
 import axios from "axios"
 import { SerialPort } from 'serialport'
 import {useSpeechSynthesis} from 'react-speech-kit'
+// import step1_img from './step1.png'
 
 
 export default function Home() {
 
   //var five = require('johnny-five');
   // const [message, setMessage] = useState('');
-  const [image, updateImage] = useState("");
+  const [image, updateImage] = useState(" ");
   const [text, updateText] = useState("");
   const [sentenceIndex, setSentenceIndex] = useState(0);
   const [story, setStory] = useState(["Act your hand shadow to start the story generation!"]);
-
+  const [instruction, setInstruction] = useState("Act your hand shadow to start the story generation!");
+  const [imageStep, setImageStep] = useState("/images/circle.png");
+  const [imageStatus, setImageStatus] = useState("block");
   // Initialize the prompt for story and image
   const [quote, setQuote] = useState("");
   const [imagePrompt, setImagePrompt] = useState("");
@@ -31,30 +34,12 @@ export default function Home() {
   var num = 0;
 
 
-    // async function openPort() {
-      // const sp = new SerialPort({path: 'COM6', baudRate: 9600});
-      // sp.open(function(err) {
-      //   if (err) {
-      //     return console.log(err.message);
-      //   }
-      // });
-      // let k = 0;
-      // sp.on('open', function() {
-      //   k = 1;
-      //   console.log("Serial Port Opened");
-      // });
-    
-      // sp.on('data', function(data) {
-      //   console.log(data[0])
-      //   arduinoData = data[0];
-      // });
-    // }
-
   
 
 //#################### TEACHABLE MACHINE ####################
   //const TeachableMachine = require("@sashido/teachablemachine-node");
-  const URL = "https://teachablemachine.withgoogle.com/models/7M2dW0YzA/";
+  // const URL = "https://teachablemachine.withgoogle.com/models/7M2dW0YzA/";
+  const URL = "https://teachablemachine.withgoogle.com/models/0msH8WaA0/";
 
   let model: any, webcam: any, labelContainer: any, maxPredictions: any, webcamContainer: any, target: any;
 
@@ -105,53 +90,35 @@ export default function Home() {
           if (prediction[i].probability.toFixed(2) > 0.9) {
               target = prediction[i].className;
           }
+          // target = "bunny"
       }
+
+      
   }
 
   // ###################################### OPENAI ######################################
-  // Capture button: initiate the story generation from OPENAI
-  async function handleSubmit(e: FormEvent<HTMLFormElement>) {
-    e.preventDefault();
-    const formData = new FormData(e.target as HTMLFormElement);
-    //const prompt = formData.get("prompt")?.toString().trim();
-    const prompt = target;
 
-    if (prompt) {
-      try {
-        setQuote("");
-        setQuoteLoadingError(false);
-        setQuoteLoading(true);
-
-        const response = await fetch("/api/generate?prompt=" + encodeURIComponent(prompt));
-        const body = await response.json();
-        setQuote(body.responseData.story);
-        setImagePrompt(body.responseData.imagePrompt);
-
-      } catch (error) {
-        console.error(error);
-        setQuoteLoadingError(true);
-      } finally {
-        setQuoteLoading(false);
-      }
-    }
-  }
 
   // ################### OPENAI: send keyword and Get story and image prompt ###################
   
   async function generateStory(){
-    const prompt = target;
-
+    const prompt =  target;
     // detect story generation, if the story is not generated, loading...
     if (prompt) {
       try {
         setQuote("");
         setQuoteLoadingError(false);
         setQuoteLoading(true);
+        setInstruction("Story is generating...")
+        setImageStep("/images/loading.gif")
 
         const response = await fetch("/api/generate?prompt=" + encodeURIComponent(prompt));
         const body = await response.json();
         setQuote(body.responseData.quote);
         setImagePrompt(body.responseData.imagePrompt);
+
+        setInstruction("Story is generated! Press next to start the story.")
+        setImageStep("/images/spin.gif");
 
       } catch (error) {
         console.error(error);
@@ -169,8 +136,11 @@ export default function Home() {
       setStory(quote.split(/[\.\?!]['"]?\s+/));
     }
 
- 
+    console.log ("story: " + story);
+
   }
+
+ 
 
   //  next chapter
   const handleNextClick = () => {
@@ -182,25 +152,36 @@ export default function Home() {
 
 
 
- 
-
   // ######################### SD: Get image #########################
   const generateImage = async (text: any) =>{
-    const imageResult = await axios.get(`http://127.0.0.1:8000/?text=${imagePrompt[sentenceIndex+1]} by Hayao Miyazaki`)
+    const imageResult = await axios.get(`http://127.0.0.1:8000/?text=${imagePrompt[sentenceIndex+1]} in cartoon style`)
     updateImage(imageResult.data)
   }
 
   // ######################### Voice Over #########################
+
+  function timeout(delay: number) {
+    return new Promise( res => setTimeout(res, delay) );
+}
+
+
   const {speak} = useSpeechSynthesis();
-  const handleSpeak = () => {
-    speak({text: story[sentenceIndex+1], rate: 0.8});
+
+  async function handleSpeak ()  {
+    await timeout(10000)
+    speak({text: story[sentenceIndex+1], rate: 1.0});
+  }
+
+  async function updateToCircle ()  {
+    await timeout(3000)
+    setImageStep("/images/circle.png");
   }
 
 
 
-  // ################### KEYBOARD ###################
  
 
+  // ################### KEYBOARD ###################
 
   useEffect(() => {
    
@@ -208,13 +189,12 @@ export default function Home() {
 
   }, []);
 
- 
   const handleKeyPress = (event: any) => {
     console.log(event.key);
     // console.log("num: " + num);
 
     // start camera
-    if (event.key == "Enter"){
+    if (event.key == "Shift"){
       // init ();
       event.preventDefault();
       document.getElementById("start").click();
@@ -222,7 +202,7 @@ export default function Home() {
     }
 
     // //capture
-    if (event.key == " "){
+    if (event.key == "Enter"){
       event.preventDefault();
       document.getElementById("capture").click();
       console.log("capture image");
@@ -251,20 +231,28 @@ export default function Home() {
     }
   };
 
+
+  // ################### IMAGE DISPLAY ###################
+
+
+
   // ################### MAIN APP ###################
-
-
+  // updateToCircle ()
+  // init()
 
   return (
     <main className={styles.main}>
       {/* <h1>Fairy Tale GPT</h1>
       <div>Generate a fairy tale based on hand gesture.</div> */}
-
+      
+      
       <Button type="button" id="start" style={{ display: "none" }} onClick={init}>Start Camera</Button>
 
       <Button type='button' id="capture"style={{ display: "none" }} onClick={generateStory} disabled={quoteLoading}>Capture</Button>
+
       <Button type="button" id="next" style={{ display: "none" }} onClick = {e => {
                   console.log("button next")
+                  setImageStatus("none");
                   handleNextClick();
                   generateImage(text);
                   generateStory();
@@ -278,12 +266,18 @@ export default function Home() {
       {/* { sentenceIndex && <h5>{sentenceIndex}</h5>} */}
 
       
+      
+      {image ?<Image src={imageStep} style={{ display: `${imageStatus}` }} alt="image" width="800" height="800"/> : null} 
       {image ?<Image src={`data:image.png;base64,${image}`} alt="image" width="1080" height="1080"/> : null} 
-      { story[sentenceIndex] && <h5>{story[sentenceIndex]}</h5>}
+
+     
+      {/* {instruction && <h5>{instruction}</h5>} */}
+     
+      { story[sentenceIndex+1] && <h5>{story[sentenceIndex]}</h5>}
 
       <div id="webcam-container" style={{ display: "none" }}></div>
-      <div id="label-container" style={{ display: "none" }}></div>
-
+      <div id="label-container" style={{ display: "none" }} ></div>
+      {/* style={{ display: "none" }} */}
     </main>
   )
 }

@@ -57,19 +57,24 @@ export default async function handler(
 
 
   // GPT integration with Chat Completion
+  
   const response = await openai.createChatCompletion({
     model: "gpt-3.5-turbo",
     messages: [
-     {"role": "system", "content": "You are a children story writer and designer that creates fairy tales for kids and generates stable diffusion prompt based on that story."},
-      {"role": "user", "content": "Create a 5-sentence children story that has the main character of a duck and generate 5 prompts for stable diffusion."},
-      {"role": "assistant", "content": "Rudy the cat was always up for an adventure. One morning, he wandered out of the house and into the garden, imersed in the sights and smells around him. Just then, he heard a rustling noise and he immediately assumed the worst; cats did not usually come by these parts! Bewildered, Rudy warily stepped forward, expecting danger, but what he saw astonished him - out from the undergrowth stepped a majestic lion! Rudy couldn't believe his eyes; the lion merely glanced at him with a gentle smile before bounding away! Rudy's heart was beating fast with excitement and he was filled with awe and reverence for this wonderful creature.\n Prompts:\n 1. A sun-dappled garden scene with soft touches of bright foliage.\n 2. Glinting beams of morning sunlight, cascading through the trees.\n 3. A fuzzy, out of focus view of some tall grass and wildflowers.\n 4. A peaceful river, winding under the shade of willow trees.\n 5. A magical meadow filled with colorful wildflowers and butterflies."},
-      {"role": "user", "content": "Create a 5-sentence children story that has the main character of a "+`${prompt}` + " and generate 5 prompts for stable diffusion."},
-],
+      
+    {"role": "system", "content": "You are a children story writer and designer that creates fairy tales for kids and generates stable diffusion prompt based on that story."},
+
+    {"role": "user", "content": "Create a 5-sentence children story that has the main character of a duck and generate 5 prompts for stable diffusion."},
+
+    {"role": "assistant", "content": "Once upon a time, there was an ugly duckling who was born into a family of ducks. He was constantly ridiculed and bullied for his appearance, so he ran away from home and found himself alone in the world. Over time, the duckling grew into a beautiful swan, and as he swam in a pond, the other animals marveled at his grace and beauty. They soon realized that the once-ugly duckling had transformed into a majestic swan. The swan was overjoyed to find that he belonged somewhere, and he lived the rest of his life surrounded by friends who loved him for who he truly was.\n Prompts:\n 1. A small pond with lush greenery and a bright blue sky. \n 2. A fuzzy, out of focus view of some tall grass and bushes, with glinting beams of morning sunlight. \n 3. A tranquil lake surrounded by lush green trees, with a beautiful swan swimming elegantly in the water. \n 4. A sun-dappled garden scene with soft touches of bright foliage. \n 5. A magical meadow filled with colorful wildflowers and butterflies."},
+
+   {"role": "user", "content": "Create a 5-sentence children story that has the main character of a "+`${prompt}` + " and generate 5 prompts for stable diffusion."},
+   ],
     temperature: 0.9,
     max_tokens: 500,
     presence_penalty: 0,
     frequency_penalty: 0,
-})
+   })
     
 
 //const textResponse = response.data.choices[0].text;
@@ -83,7 +88,7 @@ const sentences = quote.split(/[\.\?!]['"]?\s+/);
 const imagePrompt = promptString.split('\n').slice(1).map(prompt => prompt.trim());
 imagePrompt.unshift("Prompt:");
 
-console.log(sentences)
+console.log(quote)
 console.log(imagePrompt)
 
 const responseData = {imagePrompt, sentences, quote};

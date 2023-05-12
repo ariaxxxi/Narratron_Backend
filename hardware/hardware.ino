@@ -1,4 +1,4 @@
-// #include <Keyboard.h>
+#include <Keyboard.h>
 
 #define CLK 19
 #define DT 18
@@ -56,6 +56,9 @@ void loop() {
 		//Serial.print("Direction: ");
 		//Serial.print(currentDir);
 		//Serial.print(" | Counter: ");
+    if (currentDir == "CCW") {
+      Keyboard.write(KEY_RIGHT_ARROW);
+    }
 		Serial.println(counter);
 	}
 
@@ -91,7 +94,9 @@ void loop() {
 
       // only toggle the LED if the new button state is HIGH
     if (buttonState == HIGH) {
+
       Serial.println("pressed");
+      Keyboard.write("");
       }
     }
   }
