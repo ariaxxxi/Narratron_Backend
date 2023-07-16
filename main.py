@@ -17,9 +17,9 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-model_id = "CompVis/stable-diffusion-v1-4"
-pipe = StableDiffusionPipeline.from_pretrained(model_id, revision = "fp16", torch_dtype=torch.float16, torch_auth_token=auth_token)
-pipe.to("cuda")
+model_id = "runwayml/stable-diffusion-v1-5"
+pipe = StableDiffusionPipeline.from_pretrained(model_id, torch_dtype=torch.float16)
+pipe = pipe.to("cuda")
 
 @app.get("/")
 def generate(text: str):

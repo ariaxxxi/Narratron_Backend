@@ -246,11 +246,11 @@ export default function Home() {
       <div>Generate a fairy tale based on hand gesture.</div> */}
       
       
-      <Button type="button" id="start" style={{ display: "none" }} onClick={init}>Start Camera</Button>
+      <Button type="button" id="start" style={{ display: "block" }} onClick={init}>Start Camera</Button>
 
-      <Button type='button' id="capture"style={{ display: "none" }} onClick={generateStory} disabled={quoteLoading}>Capture</Button>
+      <Button type='button' id="capture"style={{ display: "block" }} onClick={generateStory} disabled={quoteLoading}>Capture</Button>
 
-      <Button type="button" id="next" style={{ display: "none" }} onClick = {e => {
+      <Button type="button" id="next" style={{ display: "block" }} onClick = {e => {
                   console.log("button next")
                   setImageStatus("none");
                   handleNextClick();
@@ -268,15 +268,15 @@ export default function Home() {
       
       
       {image ?<Image src={imageStep} style={{ display: `${imageStatus}` }} alt="image" width="800" height="800"/> : null} 
-      {image ?<Image src={`data:image.png;base64,${image}`} alt="image" width="1080" height="1080"/> : null} 
+      {/* {image ?<Image src={`data:image.png;base64,${image}`} alt="image" width="1080" height="1080"/> : null}  */}
 
      
       {/* {instruction && <h5>{instruction}</h5>} */}
      
       { story[sentenceIndex+1] && <h5>{story[sentenceIndex]}</h5>}
 
-      <div id="webcam-container" style={{ display: "none" }}></div>
-      <div id="label-container" style={{ display: "none" }} ></div>
+      <div id="webcam-container" style={{ display: "block" }}></div>
+      <div id="label-container" style={{ display: "block" }} ></div>
       {/* style={{ display: "none" }} */}
     </main>
   )
