@@ -57,8 +57,12 @@ export default function Home() {
 
     // Convenience function to setup a webcam
     const flip = true; // whether to flip the webcam
+
     webcam = new tmImage.Webcam(200, 200, flip); // width, height, flip
-    await webcam.setup(); // request access to the webcam
+    const devices = await navigator.mediaDevices.enumerateDevices();
+    console.log(devices);
+    //await webcam.setup(); // request access to the webcam
+    await webcam.setup({ deviceId: devices[1].deviceId });
     await webcam.play();
     window.requestAnimationFrame(loop);
     webcamContainer = document.getElementById("webcam-container");
